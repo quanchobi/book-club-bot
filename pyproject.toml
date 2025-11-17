@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bookclubbot"
+version = "0.1.0"
+requires-python = ">= 3.10"
+dependencies = [
+  "sqlalchemy",
+  "pytest",
+  "dotenv",
+  "discord",
+  "logging",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
