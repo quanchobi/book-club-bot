@@ -1,5 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, UniqueConstraint, event
 from sqlalchemy.ext.declarative import declarative_base
+from contextlib import contextmanager
+from sqlalchemy.orm import Session
 
 Base = declarative_base()
 
@@ -9,6 +11,7 @@ class Book(Base):
 
     isbn = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
+    score = Column(Integer)
 
 
 class Authors(Base):
@@ -58,3 +61,15 @@ def engine():
 
     Base.metadata.create_all(engine)
     return engine
+
+@contextmanager
+def get_session():
+    session = Session(engine)
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
