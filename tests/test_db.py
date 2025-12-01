@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 from datetime import datetime
-from src.bookdb import Base, Book, Authors, BookAuthors, Reviews, Meetings
+from src.bookdb import Base, Books, Authors, BookAuthors, Reviews, Meetings
 
 @pytest.fixture
 def engine():
@@ -25,21 +25,21 @@ def session(engine):
     yield session
     session.close()
 
-class TestBook:
+class TestBooks:
     def test_create_book(self, session):
         """Test creating a book"""
-        book = Book(isbn=1234567890, title="Test Book")
+        book = Books(isbn=1234567890, title="Test Book")
         session.add(book)
         session.commit()
         
-        retrieved = session.query(Book).filter_by(isbn=1234567890).first()
+        retrieved = session.query(Books).filter_by(isbn=1234567890).first()
         assert retrieved is not None
         assert retrieved.title == "Test Book"
         assert retrieved.isbn == 1234567890
     
     def test_book_title_required(self, session):
         """Test that book title is required (nullable=False)"""
-        book = Book(isbn=1234567890, title=None)
+        book = Books(isbn=1234567890, title=None)
         session.add(book)
         
         with pytest.raises(Exception):
@@ -47,8 +47,8 @@ class TestBook:
     
     def test_book_isbn_primary_key(self, session):
         """Test that isbn is unique primary key"""
-        book1 = Book(isbn=1111111111, title="Book One")
-        book2 = Book(isbn=1111111111, title="Book Two")
+        book1 = Books(isbn=1111111111, title="Book One")
+        book2 = Books(isbn=1111111111, title="Book Two")
         
         session.add(book1)
         session.commit()
@@ -80,7 +80,7 @@ class TestAuthors:
 class TestBookAuthors:
     def test_link_book_and_author(self, session):
         """Test linking a book to an author"""
-        book = Book(isbn=9876543210, title="Great Novel")
+        book = Books(isbn=9876543210, title="Great Novel")
         author = Authors(name="John Smith")
         
         session.add(book)
@@ -107,7 +107,7 @@ class TestBookAuthors:
 class TestReviews:
     def test_create_review(self, session):
         """Test creating a review"""
-        book = Book(isbn=5555555555, title="Review Test Book")
+        book = Books(isbn=5555555555, title="Review Test Book")
         session.add(book)
         session.commit()
         
@@ -135,7 +135,7 @@ class TestReviews:
     
     def test_multiple_reviews_per_book(self, session):
         """Test that a book can have multiple reviews"""
-        book = Book(isbn=7777777777, title="Popular Book")
+        book = Books(isbn=7777777777, title="Popular Book")
         session.add(book)
         session.commit()
         
@@ -153,7 +153,7 @@ class TestReviews:
 class TestMeetings:
     def test_create_meeting(self, session):
         """Test creating a meeting"""
-        book = Book(isbn=8888888888, title="Book Club Book")
+        book = Books(isbn=8888888888, title="Book Club Book")
         session.add(book)
         session.commit()
         
@@ -173,7 +173,7 @@ class TestMeetings:
     
     def test_meeting_autoincrement_id(self, session):
         """Test that meeting IDs auto-increment"""
-        book = Book(isbn=3333333333, title="Meeting Book")
+        book = Books(isbn=3333333333, title="Meeting Book")
         session.add(book)
         session.commit()
         
@@ -191,7 +191,7 @@ class TestMeetings:
 class TestRelationships:
     def test_book_with_multiple_authors(self, session):
         """Test a book with multiple authors"""
-        book = Book(isbn=4444444444, title="Collaborative Work")
+        book = Books(isbn=4444444444, title="Collaborative Work")
         author1 = Authors(name="Author One")
         author2 = Authors(name="Author Two")
         
@@ -213,8 +213,8 @@ class TestRelationships:
     def test_author_with_multiple_books(self, session):
         """Test an author with multiple books"""
         author = Authors(name="Prolific Writer")
-        book1 = Book(isbn=1010101010, title="First Novel")
-        book2 = Book(isbn=2020202020, title="Second Novel")
+        book1 = Books(isbn=1010101010, title="First Novel")
+        book2 = Books(isbn=2020202020, title="Second Novel")
         
         session.add(author)
         session.add(book1)
@@ -234,19 +234,19 @@ class TestRelationships:
 class TestQueries:
     def test_filter_books_by_title(self, session):
         """Test querying books by title"""
-        book1 = Book(isbn=1000000001, title="Alpha Book")
-        book2 = Book(isbn=1000000002, title="Beta Book")
-        book3 = Book(isbn=1000000003, title="Alpha Book Two")
+        book1 = Books(isbn=1000000001, title="Alpha Book")
+        book2 = Books(isbn=1000000002, title="Beta Book")
+        book3 = Books(isbn=1000000003, title="Alpha Book Two")
         
         session.add_all([book1, book2, book3])
         session.commit()
         
-        results = session.query(Book).filter(Book.title.like("Alpha%")).all()
+        results = session.query(Books).filter(Books.title.like("Alpha%")).all()
         assert len(results) == 2
     
     def test_order_reviews_by_score(self, session):
         """Test ordering reviews by score"""
-        book = Book(isbn=6666666666, title="Rated Book")
+        book = Books(isbn=6666666666, title="Rated Book")
         session.add(book)
         session.commit()
         

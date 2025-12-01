@@ -1,15 +1,15 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, UniqueConstraint, event
-from sqlalchemy.ext.declarative import declarative_base
+"""Discord book club bot database"""
 from contextlib import contextmanager
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, event
+from sqlalchemy.orm import Session, declarative_base
 
 Base = declarative_base()
 
-class Book(Base):
+class Books(Base):
     """Table that contains book ISBNs and titles"""
     __tablename__ = "Books"
 
-    isbn = Column(Integer, primary_key=True)
+    isbn = Column(String, primary_key=True)
     title = Column(String, nullable=False)
     score = Column(Integer)
 
@@ -18,7 +18,7 @@ class Authors(Base):
     """Table that contains author names and IDs"""
     __tablename__ = "Authors"
 
-    id = Column(Integer, primary_key=True)
+    open_library_id = Column(String, primary_key=True)
     name = Column(String, nullable = False)
 
 
@@ -34,8 +34,8 @@ class Reviews(Base):
     """Table that stores user reviews of a book"""
     __tablename__ = "Reviews"
 
-    isbn = Column(Integer, ForeignKey("Books.isbn"), primary_key=True)
-    uuid = Column(Integer, primary_key=True)
+    isbn = Column(String, ForeignKey("Books.isbn"), primary_key=True)
+    user_id = Column(String, primary_key=True)
     score = Column(Integer, nullable=False)
     review = Column(String)
 
@@ -51,19 +51,20 @@ class Meetings(Base):
 
 def engine():
     """Create the database"""
-    engine = create_engine('sqlite:///bookbot.db')
+    sqlengine = create_engine('sqlite:///bookbot.db')
 
-    @event.listens_for(engine, "connect")
-    def set_sqlite_pragma(dbapi_conn, connection_record):
+    @event.listens_for(sqlengine, "connect")
+    def set_sqlite_pragma(dbapi_conn):
         cursor = dbapi_conn.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
 
-    Base.metadata.create_all(engine)
-    return engine
+    Base.metadata.create_all(sqlengine)
+    return sqlengine
 
 @contextmanager
 def get_session():
+    """Get the SQLite session"""
     session = Session(engine)
     try:
         yield session
