@@ -44,6 +44,7 @@ test/test_schema.db
 .DS_Store
 .vs
 /scratch
+*.log
 
 # cython complied files
 /lib/**/*.c
