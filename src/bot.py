@@ -24,7 +24,7 @@ intents.typing = False
 intents.presences = False
 bot = commands.Bot(command_prefix="/", intents=intents)
 
-@bot.command()
+@bot.command
 async def list_books(ctx, sort):
     """
     show a list of books in the database, sortable by score, alphabetical, date read, etc.
@@ -32,13 +32,48 @@ async def list_books(ctx, sort):
     with get_session() as session:
         match sort:
             case "score":
-                pass
-            case "time":
-                pass
-            case _:
-                pass # default to alphabetical
+                avg_score = func.avg(Reviews.score).label('avg_score')
 
-@bot.command()
+                results = (
+                    session.query(avg_score, Book.title)
+                    .join(Book, Reviews.isbn == Books.isbn)
+                    .group_by(Reviews.isbn, Books.title)
+                    .order_by(avg_score.desc())
+                    .all()
+                )
+                    
+            case "recent":
+                first_meeting_date = func.min(Meetings.datetime).label('first_meeting_date')
+
+                results = (
+                    session.query(Reviews.score, Book.title)
+                    .join(Book, Reviews.isbn == Books.isbn)
+                    .join(Meetings, Reviews.isbn == Meetings.isbn)
+                    .group_by(Meetings.isbn, Books.title)
+                    .order_by(first_meeting_date.desc())
+                    .all()
+                )
+
+            # default to alphabetical search
+            case _:
+                results = (
+                    session.query(Reviews.score, Book.title)
+                    .join(Book, Reviews.isbn == Books.isbn)
+                    .group_by(Reviews.isbn == Books.isbn)
+                    .order_by(Book.title.desc())
+                    .all()
+                )
+
+            table = ""
+
+            for score, title in results:
+                table += f"{title}: {score}\n"
+
+        await ctx.send(table)
+    return
+
+
+@bot.command
 async def rate_book(ctx, title, score, review):
     """
     rate the specified book, with the specified score, for the user who prompted the bot.
@@ -63,10 +98,10 @@ async def rate_book(ctx, title, score, review):
 
         session.add(review)
         session.commit()
-        await ctx.send("Review added!")
+    await ctx.send("Review added!")
 
 
-@bot.command()
+@bot.command
 async def add_book(ctx, isbn=None, title=None):
     """
     find the book from the google books api, add it to local database.
@@ -93,8 +128,7 @@ async def add_book(ctx, isbn=None, title=None):
         await ctx.send(f"Added book {title}")
 
 
-
-@bot.command()
+@bot.command
 async def remove_book(ctx, isbn):
     """
     remove the specified book from the local database.
@@ -102,7 +136,7 @@ async def remove_book(ctx, isbn):
     with get_session() as session:
         pass
 
-@bot.command()
+@bot.command
 async def schedule(ctx, *args):
     """
     either shows the schedule of upcoming meetings, 
@@ -111,6 +145,8 @@ async def schedule(ctx, *args):
     """
     with get_session() as session:
         pass
+
+# TODO: Change API Call to Internet Archive API for authors search
 
 def search_by_title(title):
     """

@@ -11,7 +11,6 @@ class Books(Base):
 
     isbn = Column(String, primary_key=True)
     title = Column(String, nullable=False)
-    score = Column(Integer)
 
 
 class Authors(Base):
@@ -47,7 +46,7 @@ class Meetings(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     isbn = Column(Integer, ForeignKey("Books.isbn"))
     datetime = Column(DateTime(timezone=True), nullable=False)
-    notes = Column(String)
+    details = Column(String)
 
 def engine():
     """Create the database"""
