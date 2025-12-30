@@ -56,9 +56,9 @@ async def list_books(ctx, sort: str="", limit: int=5) -> None:
 
                 results = (
                     session.query(Reviews.score, Books.title)
-                    .join(Books, Reviews.isbn == Books.isbn)
-                    .join(Meetings, Reviews.isbn == Meetings.isbn)
-                    .group_by(Meetings.isbn, Books.title)
+                    .join(Books, Reviews.olid== Books.olid)
+                    .join(Meetings, Reviews.olid== Meetings.olid)
+                    .group_by(Meetings.olid, Books.title)
                     .order_by(first_meeting_date.desc())
                     .limit(limit)
                     .all()
@@ -68,8 +68,8 @@ async def list_books(ctx, sort: str="", limit: int=5) -> None:
             case _:
                 results = (
                     session.query(Reviews.score, Books.title)
-                    .join(Books, Reviews.isbn == Books.isbn)
-                    .group_by(Reviews.isbn == Books.isbn)
+                    .join(Books, Reviews.olid== Books.olid)
+                    .group_by(Meetings.olid, Books.title)
                     .order_by(Books.title.desc())
                     .limit(limit)
                     .all()
@@ -117,7 +117,7 @@ async def rate_book(ctx, score: float, olid: str|None=None, title: str|None=None
 
 
 @bot.command
-async def add_book(ctx, olid: str|None=None, isbn: str|None=None, title: str|None=None) -> None:
+async def add_book(ctx, olid: str|None=None, isbn: str|None=None, title: str|None=None, author: str|None=None) -> None:
     """
     find the book from the google books api, add it to local database.
     """
@@ -139,14 +139,14 @@ async def add_book(ctx, olid: str|None=None, isbn: str|None=None, title: str|Non
                 return
         # otherwise search by title and present a list of books to choose from
         else:
-            book_list = search_books()
+            book_list = search_books(title=title, author=author)
             # TODO: have user select from the list instead of assuming the first book is correct.
             book = book_list[0]
             if not book:
                 await ctx.send(f"Book {book.title} not found")
         author_olids = book.author_olids
 
-        new_book = Books(isbn=isbn, title=title)
+        new_book = Books(olid=olid, title=title)
 
         for author_olid in author_olids:
             bridge = BookAuthors(book_olid=new_book.olid, author_olid=author_olid)
@@ -175,10 +175,10 @@ async def schedule(ctx, *args) -> None:
         pass
 
 
-def search_books(title: str|None=None, author_name: str|None=None, limit: int=5) -> list[BookSearchResult]:
+def search_books(title: str|None=None, author: str|None=None, limit: int=5) -> list[BookSearchResult]:
     """ Takes a book's title and/or author_olid, and returns a list of `limit` matching books """
 
-    if not title and not author_name:
+    if not title and not author:
         return []
 
     base_url = "https://openlibrary.org/search.json"
@@ -186,8 +186,8 @@ def search_books(title: str|None=None, author_name: str|None=None, limit: int=5)
     params: dict[str, int|str] = {'limit': limit}
     if title:
         params['title'] = title
-    if author_name:
-        params['author'] = author_name
+    if author:
+        params['author'] = author 
 
     try:
         response = requests.get(base_url, params=params)
