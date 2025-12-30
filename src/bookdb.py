@@ -9,7 +9,7 @@ class Books(Base):
     """Table that contains book ISBNs and titles"""
     __tablename__ = "Books"
 
-    isbn = Column(String, primary_key=True)
+    olid = Column(String, primary_key=True)
     title = Column(String, nullable=False)
 
 
@@ -17,7 +17,7 @@ class Authors(Base):
     """Table that contains author names and IDs"""
     __tablename__ = "Authors"
 
-    open_library_id = Column(String, primary_key=True)
+    olid = Column(String, primary_key=True)
     name = Column(String, nullable = False)
 
 
@@ -25,15 +25,15 @@ class BookAuthors(Base):
     """Bridge table that can map multiple books to multiple authors"""
     __tablename__ = "BookAuthors"
     
-    isbn = Column(Integer, ForeignKey("Books.isbn"), primary_key=True)
-    author_id = Column(Integer, ForeignKey("Authors.id"), primary_key=True)
+    book_olid = Column(Integer, ForeignKey("Books.olid"), primary_key=True)
+    author_olid = Column(Integer, ForeignKey("Authors.olid"), primary_key=True)
 
 
 class Reviews(Base):
     """Table that stores user reviews of a book"""
     __tablename__ = "Reviews"
 
-    isbn = Column(String, ForeignKey("Books.isbn"), primary_key=True)
+    olid = Column(String, ForeignKey("Books.olid"), primary_key=True)
     user_id = Column(String, primary_key=True)
     score = Column(Integer, nullable=False)
     review = Column(String)
@@ -44,7 +44,7 @@ class Meetings(Base):
     __tablename__ = "Meetings"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    isbn = Column(Integer, ForeignKey("Books.isbn"))
+    olid = Column(Integer, ForeignKey("Books.olid"))
     datetime = Column(DateTime(timezone=True), nullable=False)
     details = Column(String)
 
